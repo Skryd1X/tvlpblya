@@ -1,0 +1,119 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "tokenomics": "Tokenomics",
+    "buy": "Buy TVLP",
+    "roadmap": "Roadmap",
+    "faq": "FAQ",
+    "contacts": "Contacts"
+  },
+  "hero": {
+    "title": "True Value Liquidity Protocol",
+    "subtitle": "Liquidity-first digital asset backed by substantial funding and deep on-chain liquidity program",
+    "description": "Built with major backing and deep liquidity from day one, TVLP focuses on stability, transparency, and efficient price discovery across DeFi.",
+    "buyButton": "Buy TVLP",
+    "connectWallet": "Connect Wallet",
+    "currentPrice": "Current Price",
+    "change24h": "24h Change",
+    "volume": "Volume",
+    "liquidity": "Liquidity"
+  },
+  "about": {
+    "title": "About TVLP",
+    "subtitle": "Redefining Value Creation in DeFi",
+    "mission": "Our Mission",
+    "missionText": "TVLP aims to revolutionize the DeFi landscape with substantial backing and deep liquidity reserves. Our protocol demonstrates how proper funding and liquidity management create sustainable value and institutional-grade market depth.",
+    "concept": "The Concept",
+    "conceptText": "Built with significant initial funding and fully seeded liquidity reserves, TVLP delivers stable execution, low slippage, and transparent price discovery. Our approach ensures smooth trading experiences for all participants.",
+    "innovation": "Innovation",
+    "innovationText": "Our protocol mechanics ensure optimal liquidity distribution and efficient price discovery, creating a stable and transparent trading environment that benefits both retail and institutional participants."
+  },
+  "tokenomics": {
+    "title": "Tokenomics",
+    "subtitle": "Built for Sustainable Growth",
+    "network": "Network",
+    "networkValue": "Tron (TRC-20)",
+    "contract": "Contract Address",
+    "totalSupply": "Total Supply",
+    "totalSupplyValue": "1,000,000 TVLP",
+    "currentPrice": "Current Price",
+    "liquidity": "Total Liquidity",
+    "viewOnTronscan": "View on TronScan",
+    "distribution": "Token Distribution",
+    "liquidityPool": "Liquidity Pool",
+    "development": "Development",
+    "marketing": "Marketing",
+    "community": "Community Rewards"
+  },
+  "buy": {
+    "title": "How to Buy TVLP",
+    "subtitle": "Get TVLP tokens in 3 simple steps",
+    "step1": "Connect Wallet",
+    "step1Text": "Connect your TronLink wallet to access the TVLP ecosystem",
+    "step2": "Choose Amount",
+    "step2Text": "Select how much USDT you want to exchange for TVLP tokens",
+    "step3": "Confirm Transaction",
+    "step3Text": "Approve the transaction and receive your TVLP tokens instantly",
+    "buyOnSunswap": "Buy on SunSwap",
+    "instructions": "Instructions",
+    "instructionsText": "1. Install TronLink wallet extension\n2. Connect your wallet to our site\n3. Navigate to SunSwap USDT/TVLP pool\n4. Enter desired amount and confirm swap"
+  },
+  "roadmap": {
+    "title": "Roadmap",
+    "subtitle": "Our Journey to DeFi Innovation",
+    "q3_2025": "Q3 2025",
+    "q3_2025_title": "Token Launch",
+    "q3_2025_text": "TVLP token deployment on Tron network with initial liquidity provision",
+    "q4_2025": "Q4 2025",
+    "q4_2025_title": "Website & SunSwap Listing",
+    "q4_2025_text": "Official website launch and TVLP listing on SunSwap DEX",
+    "q1_2026": "Q1 2026",
+    "q1_2026_title": "Major Exchange Listings",
+    "q1_2026_text": "Applications submitted to CoinGecko and CoinMarketCap for broader visibility",
+    "q2_2026": "Q2 2026",
+    "q2_2026_title": "DAO Governance",
+    "q2_2026_text": "Launch of decentralized governance system for community-driven decisions",
+    "q3_2026": "Q3 2026",
+    "q3_2026_title": "Strategic Partnerships",
+    "q3_2026_text": "Integration with major DeFi protocols and strategic partnership announcements"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Everything you need to know about TVLP",
+    "q1": "What is TVLP?",
+    "a1": "TVLP (True Value Liquidity Protocol) is an innovative DeFi token that demonstrates how minimal liquidity can create maximum value through strategic tokenomics and protocol mechanics.",
+    "q2": "How can I buy TVLP tokens?",
+    "a2": "You can purchase TVLP tokens through SunSwap by connecting your TronLink wallet and swapping USDT for TVLP in the dedicated liquidity pool.",
+    "q3": "Why does the price work with minimal liquidity?",
+    "a3": "Our protocol is designed with unique mechanics that create price stability and growth through controlled supply, strategic burns, and utility-driven demand rather than relying on deep liquidity pools.",
+    "q4": "Is TVLP safe to invest in?",
+    "a4": "TVLP is built on the secure Tron blockchain with audited smart contracts. However, as with all DeFi investments, please do your own research and only invest what you can afford to lose.",
+    "q5": "What makes TVLP different from other tokens?",
+    "a5": "TVLP's unique approach to tokenomics focuses on creating sustainable value through minimal liquidity, proving that innovation in protocol design can outperform traditional high-liquidity models."
+  },
+  "contacts": {
+    "title": "Get in Touch",
+    "subtitle": "Connect with the TVLP Community",
+    "email": "Email",
+    "telegram": "Telegram Group",
+    "community": "Join our community to stay updated on the latest TVLP developments, participate in governance discussions, and connect with fellow token holders.",
+    "support": "For technical support, partnership inquiries, or general questions, don't hesitate to reach out through any of our communication channels."
+  },
+  "wallet": {
+    "connect": "Connect Wallet",
+    "disconnect": "Disconnect",
+    "connected": "Connected",
+    "balance": "Balance",
+    "address": "Address",
+    "copyAddress": "Copy Address",
+    "copied": "Copied!"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "comingSoon": "Coming Soon",
+    "learnMore": "Learn More"
+  }
+}

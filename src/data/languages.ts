@@ -1,0 +1,7 @@
+import { Language } from '../types';
+
+export const languages: Language[] = [
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' }
+];

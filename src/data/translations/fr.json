@@ -1,0 +1,119 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "about": "À propos",
+    "tokenomics": "Tokenomics",
+    "buy": "Acheter TVLP",
+    "roadmap": "Feuille de route",
+    "faq": "FAQ",
+    "contacts": "Contacts"
+  },
+  "hero": {
+    "title": "True Value Liquidity Protocol",
+    "subtitle": "Actif numérique axé sur la liquidité, soutenu par un financement important et un programme de liquidité on-chain profond",
+    "description": "Construit avec un soutien majeur et une liquidité profonde dès le premier jour, TVLP se concentre sur la stabilité, la transparence et une découverte de prix efficace à travers la DeFi.",
+    "buyButton": "Acheter TVLP",
+    "connectWallet": "Connecter le portefeuille",
+    "currentPrice": "Prix actuel",
+    "change24h": "Variation 24h",
+    "volume": "Volume",
+    "liquidity": "Liquidité"
+  },
+  "about": {
+    "title": "À propos de TVLP",
+    "subtitle": "Redéfinir la création de valeur dans la DeFi",
+    "mission": "Notre Mission",
+    "missionText": "TVLP vise à révolutionner le paysage DeFi en prouvant que la vraie valeur ne nécessite pas de pools de liquidité massifs. Notre protocole démontre comment des tokenomics stratégiques peuvent créer une appréciation durable des prix.",
+    "concept": "Le Concept",
+    "conceptText": "Les projets DeFi traditionnels se concentrent sur des pools de liquidité profonds. TVLP adopte l'approche opposée - en maintenant une liquidité minimale tout en maximisant l'utilité et la demande, nous créons une proposition de valeur unique qui profite aux premiers adoptants et aux détenteurs à long terme.",
+    "innovation": "Innovation",
+    "innovationText": "Nos mécaniques de protocole garantissent que chaque transaction contribue à la stabilité et à la croissance des prix, créant un cycle auto-renforçant de création de valeur qui ne dépend pas du trading spéculatif."
+  },
+  "tokenomics": {
+    "title": "Tokenomics",
+    "subtitle": "Conçu pour une croissance durable",
+    "network": "Réseau",
+    "networkValue": "Tron (TRC-20)",
+    "contract": "Adresse du contrat",
+    "totalSupply": "Offre totale",
+    "totalSupplyValue": "1 000 000 TVLP",
+    "currentPrice": "Prix actuel",
+    "liquidity": "Liquidité totale",
+    "viewOnTronscan": "Voir sur TronScan",
+    "distribution": "Distribution des tokens",
+    "liquidityPool": "Pool de liquidité",
+    "development": "Développement",
+    "marketing": "Marketing",
+    "community": "Récompenses communautaires"
+  },
+  "buy": {
+    "title": "Comment acheter TVLP",
+    "subtitle": "Obtenez des tokens TVLP en 3 étapes simples",
+    "step1": "Connecter le portefeuille",
+    "step1Text": "Connectez votre portefeuille TronLink pour accéder à l'écosystème TVLP",
+    "step2": "Choisir le montant",
+    "step2Text": "Sélectionnez combien d'USDT vous voulez échanger contre des tokens TVLP",
+    "step3": "Confirmer la transaction",
+    "step3Text": "Approuvez la transaction et recevez vos tokens TVLP instantanément",
+    "buyOnSunswap": "Acheter sur SunSwap",
+    "instructions": "Instructions",
+    "instructionsText": "1. Installez l'extension de portefeuille TronLink\n2. Connectez votre portefeuille à notre site\n3. Naviguez vers le pool SunSwap USDT/TVLP\n4. Entrez le montant désiré et confirmez l'échange"
+  },
+  "roadmap": {
+    "title": "Feuille de route",
+    "subtitle": "Notre voyage vers l'innovation DeFi",
+    "q3_2025": "T3 2025",
+    "q3_2025_title": "Lancement du token",
+    "q3_2025_text": "Déploiement du token TVLP sur le réseau Tron avec provision de liquidité initiale",
+    "q4_2025": "T4 2025",
+    "q4_2025_title": "Site web et listing SunSwap",
+    "q4_2025_text": "Lancement du site officiel et listing TVLP sur SunSwap DEX",
+    "q1_2026": "T1 2026",
+    "q1_2026_title": "Listings sur les principales bourses",
+    "q1_2026_text": "Candidatures soumises à CoinGecko et CoinMarketCap pour une visibilité plus large",
+    "q2_2026": "T2 2026",
+    "q2_2026_title": "Gouvernance DAO",
+    "q2_2026_text": "Lancement du système de gouvernance décentralisée pour les décisions communautaires",
+    "q3_2026": "T3 2026",
+    "q3_2026_title": "Partenariats stratégiques",
+    "q3_2026_text": "Intégration avec les principaux protocoles DeFi et annonces de partenariats stratégiques"
+  },
+  "faq": {
+    "title": "Questions fréquemment posées",
+    "subtitle": "Tout ce que vous devez savoir sur TVLP",
+    "q1": "Qu'est-ce que TVLP ?",
+    "a1": "TVLP (True Value Liquidity Protocol) est un token DeFi innovant qui démontre comment une liquidité minimale peut créer une valeur maximale grâce à des tokenomics stratégiques et des mécaniques de protocole.",
+    "q2": "Comment puis-je acheter des tokens TVLP ?",
+    "a2": "Vous pouvez acheter des tokens TVLP via SunSwap en connectant votre portefeuille TronLink et en échangeant des USDT contre des TVLP dans le pool de liquidité dédié.",
+    "q3": "Pourquoi le prix fonctionne-t-il avec une liquidité minimale ?",
+    "a3": "Notre protocole est conçu avec des mécaniques uniques qui créent la stabilité et la croissance des prix grâce à une offre contrôlée, des brûlages stratégiques et une demande axée sur l'utilité plutôt que de s'appuyer sur des pools de liquidité profonds.",
+    "q4": "Est-il sûr d'investir dans TVLP ?",
+    "a4": "TVLP est construit sur la blockchain Tron sécurisée avec des contrats intelligents audités. Cependant, comme pour tous les investissements DeFi, veuillez faire vos propres recherches et n'investissez que ce que vous pouvez vous permettre de perdre.",
+    "q5": "Qu'est-ce qui rend TVLP différent des autres tokens ?",
+    "a5": "L'approche unique de TVLP en matière de tokenomics se concentre sur la création de valeur durable grâce à une liquidité minimale, prouvant que l'innovation dans la conception de protocole peut surpasser les modèles traditionnels à haute liquidité."
+  },
+  "contacts": {
+    "title": "Contactez-nous",
+    "subtitle": "Connectez-vous avec la communauté TVLP",
+    "email": "Email",
+    "telegram": "Groupe Telegram",
+    "community": "Rejoignez notre communauté pour rester informé des derniers développements TVLP, participer aux discussions de gouvernance et vous connecter avec d'autres détenteurs de tokens.",
+    "support": "Pour le support technique, les demandes de partenariat ou les questions générales, n'hésitez pas à nous contacter via l'un de nos canaux de communication."
+  },
+  "wallet": {
+    "connect": "Connecter le portefeuille",
+    "disconnect": "Déconnecter",
+    "connected": "Connecté",
+    "balance": "Solde",
+    "address": "Adresse",
+    "copyAddress": "Copier l'adresse",
+    "copied": "Copié !"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "retry": "Réessayer",
+    "comingSoon": "Bientôt disponible",
+    "learnMore": "En savoir plus"
+  }
+}
