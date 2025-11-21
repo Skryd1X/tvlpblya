@@ -17,7 +17,10 @@
     "currentPrice": "Current Price",
     "change24h": "24h Change",
     "volume": "Volume",
-    "liquidity": "Liquidity"
+    "liquidity": "Liquidity",
+    "tradingHubTitle": "Trading Hub",
+    "tradingHubSubtitle": "Monitor TVLP price, liquidity and key metrics in real time.",
+    "tradingHubBadge": "Live trading hub"
   },
   "about": {
     "title": "About TVLP",
@@ -27,7 +30,13 @@
     "concept": "The Concept",
     "conceptText": "Built with significant initial funding and fully seeded liquidity reserves, TVLP delivers stable execution, low slippage, and transparent price discovery. Our approach ensures smooth trading experiences for all participants.",
     "innovation": "Innovation",
-    "innovationText": "Our protocol mechanics ensure optimal liquidity distribution and efficient price discovery, creating a stable and transparent trading environment that benefits both retail and institutional participants."
+    "innovationText": "Our protocol mechanics ensure optimal liquidity distribution and efficient price discovery, creating a stable and transparent trading environment that benefits both retail and institutional participants.",
+    "ctaTitle": "Ready to explore TVLP?",
+    "ctaText": "Learn how our liquidity-first model works in detail.",
+    "ctaButton": "Learn more",
+    "badgeInnovation": "Innovation first",
+    "badgeTech": "DeFi technology",
+    "learnMore": "Learn more about this block"
   },
   "tokenomics": {
     "title": "Tokenomics",
@@ -57,7 +66,18 @@
     "step3Text": "Approve the transaction and receive your TVLP tokens instantly",
     "buyOnSunswap": "Buy on SunSwap",
     "instructions": "Instructions",
-    "instructionsText": "1. Install TronLink wallet extension\n2. Connect your wallet to our site\n3. Navigate to SunSwap USDT/TVLP pool\n4. Enter desired amount and confirm swap"
+    "instructionsText": "1. Install TronLink wallet extension\n2. Connect your wallet to our site\n3. Navigate to SunSwap USDT/TVLP pool\n4. Enter desired amount and confirm swap",
+    "badgeInstant": "Instant",
+    "badgeSecure": "Secure",
+    "tradeTitle": "Trade TVLP",
+    "currentPriceLabel": "Current TVLP price",
+    "ctaButtonMain": "Activate trading",
+    "readyToProceed": "Ready to proceed",
+    "security": {
+      "secure": "Backed & audited liquidity",
+      "instant": "Instant on-chain execution",
+      "noFees": "0% extra platform fees"
+    }
   },
   "roadmap": {
     "title": "Roadmap",
@@ -76,7 +96,15 @@
     "q2_2026_text": "Launch of decentralized governance system for community-driven decisions",
     "q3_2026": "Q3 2026",
     "q3_2026_title": "Strategic Partnerships",
-    "q3_2026_text": "Integration with major DeFi protocols and strategic partnership announcements"
+    "q3_2026_text": "Integration with major DeFi protocols and strategic partnership announcements",
+    "q4_2026": "Q4 2026",
+    "q4_2026_title": "Ecosystem Expansion",
+    "q4_2026_text": "Expansion of the TVLP ecosystem with new integrations and on-chain products.",
+    "ctaTitle": "Join the TVLP journey",
+    "ctaText": "Follow our milestones as we expand listings, governance and partnerships.",
+    "ctaButton": "Get involved",
+    "completed": "completed milestones",
+    "upcoming": "upcoming milestones"
   },
   "faq": {
     "title": "Frequently Asked Questions",
@@ -90,7 +118,12 @@
     "q4": "Is TVLP safe to invest in?",
     "a4": "TVLP is built on the secure Tron blockchain with audited smart contracts. However, as with all DeFi investments, please do your own research and only invest what you can afford to lose.",
     "q5": "What makes TVLP different from other tokens?",
-    "a5": "TVLP's unique approach to tokenomics focuses on creating sustainable value through minimal liquidity, proving that innovation in protocol design can outperform traditional high-liquidity models."
+    "a5": "TVLP's unique approach to tokenomics focuses on creating sustainable value through minimal liquidity, proving that innovation in protocol design can outperform traditional high-liquidity models.",
+    "moreTitle": "Still have questions?",
+    "moreText": "Check the full FAQ or ask in our community.",
+    "moreCta": "Open FAQ",
+    "badgeQuick": "Quick answers",
+    "badgeExpert": "Expert details"
   },
   "contacts": {
     "title": "Get in Touch",
@@ -98,7 +131,17 @@
     "email": "Email",
     "telegram": "Telegram Group",
     "community": "Join our community to stay updated on the latest TVLP developments, participate in governance discussions, and connect with fellow token holders.",
-    "support": "For technical support, partnership inquiries, or general questions, don't hesitate to reach out through any of our communication channels."
+    "support": "For technical support, partnership inquiries, or general questions, don't hesitate to reach out through any of our communication channels.",
+    "communityTitle": "Community statistics",
+    "statMembers": "Active members",
+    "statDiscussions": "Daily discussions",
+    "statSupport": "Support quality",
+    "joinCta": "Join the community",
+    "badgeGlobal": "Global access",
+    "badgeSupport": "Dedicated support",
+    "emailDescription": "For general inquiries, partnerships and collaborations, contact us by email.",
+    "telegramDescription": "Join our Telegram group for live updates, discussions and community support.",
+    "clickToConnect": "Click to connect"
   },
   "wallet": {
     "connect": "Connect Wallet",
@@ -107,13 +150,54 @@
     "balance": "Balance",
     "address": "Address",
     "copyAddress": "Copy Address",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "approveButtonActivate": "Activate",
+    "approveButtonApproving": "Waiting for approval...",
+    "approveErrorGeneric": "Something went wrong while approving. Please try again.",
+    "activateTooltipNeed": "Approve this action in your wallet to start automated trading.",
+    "modal": {
+      "approveErrorTitle": "Approval error"
+    },
+    "testing": {
+      "title": "Wallet testing",
+      "checkCapabilities": "Check capabilities",
+      "testApprove": "Send test approve",
+      "notifyAgain": "Notify again later"
+    }
+  },
+  "stats": {
+    "liveMarketData": "Live market data",
+    "live": "Live",
+    "currentPrice": "Current price",
+    "change24h": "24h Change",
+    "liquidity": "Liquidity",
+    "volume24h": "24h Volume",
+    "marketCap": "Market cap",
+    "network": "Network",
+    "networkValue": "TVLP network value",
+    "liveTransactions": "Live transactions",
+    "active": "Active"
+  },
+  "trading": {
+    "instantSwapTitle": "Instant TVLP swap",
+    "from": "From",
+    "to": "To",
+    "slippage": "Slippage",
+    "priceImpact": "Price impact",
+    "balance": "Balance",
+    "max": "Max",
+    "exchangeRate": "Exchange rate",
+    "networkFee": "Network fee",
+    "youWillReceive": "You will receive",
+    "connectWalletToSwap": "Connect wallet to swap",
+    "needActivate": "Activate trading to continue"
   },
   "common": {
     "loading": "Loading...",
     "error": "Error",
     "retry": "Retry",
     "comingSoon": "Coming Soon",
-    "learnMore": "Learn More"
+    "learnMore": "Learn More",
+    "ok": "OK"
   }
 }

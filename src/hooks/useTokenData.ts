@@ -1,61 +1,80 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TokenData } from '../types';
+
+const BASE_PRICE = 184;
 
 export const useTokenData = () => {
   const [tokenData, setTokenData] = useState<TokenData>({
-    price: 184, // Fixed price at $184
+    price: BASE_PRICE,           // фиксируем базу
     change24h: 12.5,
-    volume24h: 2500000, // $2.5M volume
-    liquidity: 920000, // $920K liquidity
-    marketCap: 184000000 // $184M market cap
+    volume24h: 2_500_000,        // $2.5M volume
+    liquidity: 920_000,          // $920K liquidity
+    marketCap: BASE_PRICE * 1_000_000, // 1M total supply
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchTokenData();
-    const interval = setInterval(fetchTokenData, 30000); // Update every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
+  const fetchTokenData = useCallback(
+    async (options?: { showLoader?: boolean }) => {
+      const showLoader = options?.showLoader ?? false;
 
-  const fetchTokenData = async () => {
-    try {
-      setIsLoading(true);
+      if (showLoader) setIsLoading(true);
       setError(null);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simulate realistic price fluctuation around $184
-      const basePrice = 184;
-      const fluctuation = (Math.random() - 0.5) * 2; // ±$1 fluctuation
-      const newPrice = Math.max(180, Math.min(188, basePrice + fluctuation));
-      
-      // Simulate realistic volume and change
-      const change24h = ((newPrice - basePrice) / basePrice) * 100 + (Math.random() - 0.5) * 5;
-      const volume24h = 2000000 + Math.random() * 1000000; // $2-3M volume
-      const liquidity = 900000 + Math.random() * 100000; // $900K-1M liquidity
-      
-      setTokenData(prev => ({
-        ...prev,
-        price: newPrice,
-        change24h,
-        volume24h,
-        liquidity,
-        marketCap: newPrice * 1000000 // 1M total supply
-      }));
-    } catch (err) {
-      setError('Failed to fetch token data');
-      console.error('Error fetching token data:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
+      try {
+        // псевдо-API для демо
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Небольшие флуктуации вокруг $184
+        const fluctuation = (Math.random() - 0.5) * 2; // ±$1
+        const newPrice = Math.max(180, Math.min(188, BASE_PRICE + fluctuation));
+
+        const change24h =
+          ((newPrice - BASE_PRICE) / BASE_PRICE) * 100 +
+          (Math.random() - 0.5) * 5;
+
+        const volume24h = 2_000_000 + Math.random() * 1_000_000; // $2–3M
+        const liquidity = 900_000 + Math.random() * 100_000;      // $900K–1M
+
+        setTokenData({
+          price: newPrice,
+          change24h,
+          volume24h,
+          liquidity,
+          marketCap: newPrice * 1_000_000, // 1M supply
+        });
+      } catch (err) {
+        console.error('Error fetching token data:', err);
+        setError('Failed to fetch token data');
+      } finally {
+        if (showLoader) setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    let isActive = true;
+
+    // первый запрос — с лоадером
+    fetchTokenData({ showLoader: true });
+
+    // авто-обновление каждые 30 секунд без лоадера, чтобы не мигало на мобилках
+    const intervalId = setInterval(() => {
+      if (!isActive) return;
+      fetchTokenData({ showLoader: false });
+    }, 30_000);
+
+    return () => {
+      isActive = false;
+      clearInterval(intervalId);
+    };
+  }, [fetchTokenData]);
 
   return {
     tokenData,
     isLoading,
     error,
-    refetch: fetchTokenData
+    refetch: () => fetchTokenData({ showLoader: true }),
   };
 };

@@ -1,3 +1,108 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===== BASE ===== */
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-gray-900 text-gray-100 antialiased;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", ui-sans-serif,
+      sans-serif;
+  }
+
+  ::selection {
+    @apply bg-cyan-500/40 text-white;
+  }
+}
+
+/* ===== COMPONENTS (REUSABLE BLOCKS) ===== */
+@layer components {
+  /* Generic section wrapper */
+  .tvlp-section {
+    @apply py-24 px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Glassy card for dark background */
+  .tvlp-card {
+    @apply bg-gray-800/60 border border-white/10 rounded-3xl backdrop-blur-xl shadow-xl;
+  }
+
+  /* Small pill label (badges, status) */
+  .tvlp-pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5
+      px-3 py-1 text-xs font-medium uppercase tracking-wide;
+  }
+
+  /* CTA button style (can reuse if нужно) */
+  .tvlp-cta {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 font-semibold
+      bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600
+      hover:from-cyan-400 hover:via-blue-500 hover:to-purple-500
+      transition-transform duration-300 hover:scale-105
+      shadow-lg shadow-cyan-500/25;
+  }
+}
+
+/* ===== UTILITIES ===== */
+@layer utilities {
+  /* Gradient text helpers for headings */
+  .gradient-text-cyan {
+    @apply bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-transparent;
+  }
+
+  .gradient-text-pink {
+    @apply bg-gradient-to-r from-pink-400 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent;
+  }
+
+  /* Extra-strong shadow for hero / important cards */
+  .shadow-3xl {
+    --tw-shadow: 0 40px 120px rgba(15, 23, 42, 0.95);
+    --tw-shadow-colored: 0 40px 120px var(--tw-shadow-color);
+    box-shadow:
+      var(--tw-ring-offset-shadow, 0 0 #0000),
+      var(--tw-ring-shadow, 0 0 #0000),
+      var(--tw-shadow);
+  }
+
+  /* Slow spin used in Tokenomics pie chart */
+  .animate-spin-slow {
+    animation: spin 10s linear infinite;
+  }
+
+  /* Nice hover effect for glass cards */
+  .glass-hover {
+    @apply transition-all duration-300 hover:bg-white/5 hover:border-white/20 hover:shadow-3xl;
+  }
+
+  /* Gradient border wrapper (for fancy blocks) */
+  .tvlp-border-gradient {
+    position: relative;
+  }
+
+  .tvlp-border-gradient::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(120deg, #22d3ee, #6366f1, #ec4899);
+    opacity: 0.35;
+    z-index: -1;
+  }
+
+  /* Optional: subtle grid background if ever needed
+  .bg-tvlp-grid {
+    background-image:
+      linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  */
+}

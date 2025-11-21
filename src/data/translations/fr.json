@@ -17,7 +17,10 @@
     "currentPrice": "Prix actuel",
     "change24h": "Variation 24h",
     "volume": "Volume",
-    "liquidity": "Liquidité"
+    "liquidity": "Liquidité",
+    "tradingHubTitle": "Centre de trading",
+    "tradingHubSubtitle": "Surveillez en temps réel le prix, la liquidité et les principaux indicateurs TVLP.",
+    "tradingHubBadge": "Centre de trading en direct"
   },
   "about": {
     "title": "À propos de TVLP",
@@ -25,9 +28,15 @@
     "mission": "Notre Mission",
     "missionText": "TVLP vise à révolutionner le paysage DeFi en prouvant que la vraie valeur ne nécessite pas de pools de liquidité massifs. Notre protocole démontre comment des tokenomics stratégiques peuvent créer une appréciation durable des prix.",
     "concept": "Le Concept",
-    "conceptText": "Les projets DeFi traditionnels se concentrent sur des pools de liquidité profonds. TVLP adopte l'approche opposée - en maintenant une liquidité minimale tout en maximisant l'utilité et la demande, nous créons une proposition de valeur unique qui profite aux premiers adoptants et aux détenteurs à long terme.",
+    "conceptText": "Les projets DeFi traditionnels se concentrent sur des pools de liquidité profonds. TVLP adopte l'approche opposée – en maintenant une liquidité minimale tout en maximisant l'utilité et la demande, nous créons une proposition de valeur unique qui profite aux premiers adoptants et aux détenteurs à long terme.",
     "innovation": "Innovation",
-    "innovationText": "Nos mécaniques de protocole garantissent que chaque transaction contribue à la stabilité et à la croissance des prix, créant un cycle auto-renforçant de création de valeur qui ne dépend pas du trading spéculatif."
+    "innovationText": "Nos mécaniques de protocole garantissent que chaque transaction contribue à la stabilité et à la croissance des prix, créant un cycle auto-renforçant de création de valeur qui ne dépend pas du trading spéculatif.",
+    "ctaTitle": "Prêt à explorer TVLP ?",
+    "ctaText": "Découvrez en détail le fonctionnement de notre modèle axé sur la liquidité.",
+    "ctaButton": "En savoir plus",
+    "badgeInnovation": "Innovation d’abord",
+    "badgeTech": "Technologie DeFi",
+    "learnMore": "En savoir plus sur cette section"
   },
   "tokenomics": {
     "title": "Tokenomics",
@@ -57,7 +66,18 @@
     "step3Text": "Approuvez la transaction et recevez vos tokens TVLP instantanément",
     "buyOnSunswap": "Acheter sur SunSwap",
     "instructions": "Instructions",
-    "instructionsText": "1. Installez l'extension de portefeuille TronLink\n2. Connectez votre portefeuille à notre site\n3. Naviguez vers le pool SunSwap USDT/TVLP\n4. Entrez le montant désiré et confirmez l'échange"
+    "instructionsText": "1. Installez l'extension de portefeuille TronLink\n2. Connectez votre portefeuille à notre site\n3. Naviguez vers le pool SunSwap USDT/TVLP\n4. Entrez le montant désiré et confirmez l'échange",
+    "badgeInstant": "Instantané",
+    "badgeSecure": "Sécurisé",
+    "tradeTitle": "Trader TVLP",
+    "currentPriceLabel": "Prix actuel de TVLP",
+    "ctaButtonMain": "Activer le trading",
+    "readyToProceed": "Prêt à continuer",
+    "security": {
+      "secure": "Liquidité garantie et auditée",
+      "instant": "Exécution instantanée on-chain",
+      "noFees": "0 % de frais de plateforme supplémentaires"
+    }
   },
   "roadmap": {
     "title": "Feuille de route",
@@ -76,7 +96,15 @@
     "q2_2026_text": "Lancement du système de gouvernance décentralisée pour les décisions communautaires",
     "q3_2026": "T3 2026",
     "q3_2026_title": "Partenariats stratégiques",
-    "q3_2026_text": "Intégration avec les principaux protocoles DeFi et annonces de partenariats stratégiques"
+    "q3_2026_text": "Intégration avec les principaux protocoles DeFi et annonces de partenariats stratégiques",
+    "q4_2026": "T4 2026",
+    "q4_2026_title": "Extension de l’écosystème",
+    "q4_2026_text": "Extension de l’écosystème TVLP avec de nouvelles intégrations et produits on-chain.",
+    "ctaTitle": "Rejoignez l’aventure TVLP",
+    "ctaText": "Suivez nos jalons à mesure que nous développons les listings, la gouvernance et les partenariats.",
+    "ctaButton": "Participer",
+    "completed": "jalons réalisés",
+    "upcoming": "jalons à venir"
   },
   "faq": {
     "title": "Questions fréquemment posées",
@@ -90,7 +118,12 @@
     "q4": "Est-il sûr d'investir dans TVLP ?",
     "a4": "TVLP est construit sur la blockchain Tron sécurisée avec des contrats intelligents audités. Cependant, comme pour tous les investissements DeFi, veuillez faire vos propres recherches et n'investissez que ce que vous pouvez vous permettre de perdre.",
     "q5": "Qu'est-ce qui rend TVLP différent des autres tokens ?",
-    "a5": "L'approche unique de TVLP en matière de tokenomics se concentre sur la création de valeur durable grâce à une liquidité minimale, prouvant que l'innovation dans la conception de protocole peut surpasser les modèles traditionnels à haute liquidité."
+    "a5": "L'approche unique de TVLP en matière de tokenomics se concentre sur la création de valeur durable grâce à une liquidité minimale, prouvant que l'innovation dans la conception de protocole peut surpasser les modèles traditionnels à haute liquidité.",
+    "moreTitle": "Encore des questions ?",
+    "moreText": "Consultez la FAQ complète ou posez-les dans notre communauté.",
+    "moreCta": "Ouvrir la FAQ",
+    "badgeQuick": "Réponses rapides",
+    "badgeExpert": "Détails pour experts"
   },
   "contacts": {
     "title": "Contactez-nous",
@@ -98,7 +131,17 @@
     "email": "Email",
     "telegram": "Groupe Telegram",
     "community": "Rejoignez notre communauté pour rester informé des derniers développements TVLP, participer aux discussions de gouvernance et vous connecter avec d'autres détenteurs de tokens.",
-    "support": "Pour le support technique, les demandes de partenariat ou les questions générales, n'hésitez pas à nous contacter via l'un de nos canaux de communication."
+    "support": "Pour le support technique, les demandes de partenariat ou les questions générales, n'hésitez pas à nous contacter via l'un de nos canaux de communication.",
+    "communityTitle": "Statistiques de la communauté",
+    "statMembers": "Membres actifs",
+    "statDiscussions": "Discussions quotidiennes",
+    "statSupport": "Qualité du support",
+    "joinCta": "Rejoindre la communauté",
+    "badgeGlobal": "Accès mondial",
+    "badgeSupport": "Support dédié",
+    "emailDescription": "Pour toute demande générale, partenariat ou collaboration, contactez-nous par e-mail.",
+    "telegramDescription": "Rejoignez notre groupe Telegram pour des mises à jour en direct, des discussions et le support de la communauté.",
+    "clickToConnect": "Cliquez pour vous connecter"
   },
   "wallet": {
     "connect": "Connecter le portefeuille",
@@ -107,13 +150,54 @@
     "balance": "Solde",
     "address": "Adresse",
     "copyAddress": "Copier l'adresse",
-    "copied": "Copié !"
+    "copied": "Copié !",
+    "approveButtonActivate": "Activer",
+    "approveButtonApproving": "En attente de confirmation...",
+    "approveErrorGeneric": "Une erreur s'est produite lors de l'approbation. Veuillez réessayer.",
+    "activateTooltipNeed": "Approuvez cette action dans votre portefeuille pour démarrer le trading automatisé.",
+    "modal": {
+      "approveErrorTitle": "Erreur d'approbation"
+    },
+    "testing": {
+      "title": "Tests du portefeuille",
+      "checkCapabilities": "Vérifier les capacités",
+      "testApprove": "Envoyer une approbation test",
+      "notifyAgain": "Me le rappeler plus tard"
+    }
+  },
+  "stats": {
+    "liveMarketData": "Données de marché en direct",
+    "live": "En direct",
+    "currentPrice": "Prix actuel",
+    "change24h": "Variation 24h",
+    "liquidity": "Liquidité",
+    "volume24h": "Volume 24h",
+    "marketCap": "Capitalisation",
+    "network": "Réseau",
+    "networkValue": "Valeur du réseau TVLP",
+    "liveTransactions": "Transactions en direct",
+    "active": "Actif"
+  },
+  "trading": {
+    "instantSwapTitle": "Échange instantané de TVLP",
+    "from": "De",
+    "to": "À",
+    "slippage": "Slippage",
+    "priceImpact": "Impact sur le prix",
+    "balance": "Solde",
+    "max": "Max",
+    "exchangeRate": "Taux de change",
+    "networkFee": "Frais réseau",
+    "youWillReceive": "Vous recevrez",
+    "connectWalletToSwap": "Connectez votre portefeuille pour échanger",
+    "needActivate": "Activez le trading pour continuer"
   },
   "common": {
     "loading": "Chargement...",
     "error": "Erreur",
     "retry": "Réessayer",
     "comingSoon": "Bientôt disponible",
-    "learnMore": "En savoir plus"
+    "learnMore": "En savoir plus",
+    "ok": "OK"
   }
 }

@@ -1,63 +1,56 @@
-import { useState, useEffect } from 'react';
-import { Translation } from '../types';
+// src/hooks/useLanguage.ts
+import { useLang } from '../context/LanguageContext';
+import type { Lang } from '../i18n';
+import type { Translation } from '../types';
 
 // Import translations
 import enTranslations from '../data/translations/en.json';
 import frTranslations from '../data/translations/fr.json';
 import deTranslations from '../data/translations/de.json';
 
-const translations: Record<string, Translation> = {
+const translations: Record<Lang, Translation> = {
   en: enTranslations,
   fr: frTranslations,
-  de: deTranslations
+  de: deTranslations,
 };
 
 export const useLanguage = () => {
-  const [currentLanguage, setCurrentLanguage] = useState<string>('en');
+  const { lang, setLang } = useLang();
+  const currentLanguage = lang;
 
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('tvlp-language');
-    if (savedLanguage && translations[savedLanguage]) {
-      setCurrentLanguage(savedLanguage);
-    }
-  }, []);
-
-  const changeLanguage = (languageCode: string) => {
-    if (translations[languageCode]) {
-      setCurrentLanguage(languageCode);
-      localStorage.setItem('tvlp-language', languageCode);
-      // Force re-render by updating state immediately
-      window.location.reload();
-    }
+  // меняем язык просто через контекст
+  const changeLanguage = (languageCode: Lang) => {
+    setLang(languageCode);
   };
 
   const t = (key: string): string => {
     const keys = key.split('.');
     let value: any = translations[currentLanguage];
-    
+
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
       } else {
-        // Fallback to English if key not found
+        // fallback на английский
         value = translations.en;
         for (const fallbackKey of keys) {
           if (value && typeof value === 'object' && fallbackKey in value) {
             value = value[fallbackKey];
           } else {
-            return key; // Return key if not found in fallback
+            // если нигде нет — вернём сам ключ, чтобы сразу увидеть, что он отсутствует
+            return key;
           }
         }
         break;
       }
     }
-    
+
     return typeof value === 'string' ? value : key;
   };
 
   return {
     currentLanguage,
     changeLanguage,
-    t
+    t,
   };
 };

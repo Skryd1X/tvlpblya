@@ -3,7 +3,46 @@
   publish   = "dist"
   functions = "netlify/functions"
 
+# Локальный netlify dev (чтобы не указывать руками)
+[dev]
+  command = "npm run dev"
+  port = 5173
+  targetPort = 5173
+  publish = "dist"
+
+# Общие настройки для функций
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = []
+
+# REST-алиас, если захочешь вызывать функции через /api/*
+# Например: /api/notify-wallet → /.netlify/functions/notify-wallet
+[[redirects]]
+  from = "/api/*"
+  to   = "/.netlify/functions/:splat"
+  status = 200
+
+# SPA-режим: всё на index.html (оставил как у тебя)
 [[redirects]]
   from = "/*"
   to   = "/index.html"
   status = 200
+
+# Немного заголовков по безопасности и кэшу (можно убрать, если не нужно)
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

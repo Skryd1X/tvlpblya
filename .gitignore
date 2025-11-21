@@ -1,9 +1,35 @@
-﻿node_modules/
+﻿# Dependencies
+node_modules/
+
+# Builds / bundles
 dist/
+.netlify/
+.netlify/edge-functions/
+.netlify/functions/
+
+# Env files
 .env
 .env.*
-.DS_Store
-.netlify/
+!.env.example
+
+# Logs
 npm-debug.log*
-yarn.lock
-pnpm-lock.yaml
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Tooling cache
+*.tsbuildinfo
+.eslintcache
+node_modules/.vite
+.cache/
